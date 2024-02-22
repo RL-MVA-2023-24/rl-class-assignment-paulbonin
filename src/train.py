@@ -10,6 +10,8 @@ env = TimeLimit(
 # You have to implement your own agent.
 # Don't modify the methods names and signatures, but you can add methods.
 # ENJOY!
+
+
 class ProjectAgent:
     def act(self, observation, use_random=False):
         return 0
