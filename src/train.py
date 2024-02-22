@@ -22,7 +22,11 @@ class ProjectAgent:
     def load(self):
         pass
 
-######
+
+############################################################
+############################################################
+############################################################
+
 
 import torch
 import torch.nn as nn
@@ -409,4 +413,4 @@ config = {'nb_actions': cartpole.action_space.n,
 # Train agent
 agent = dqn_agent(config, DQN)
 scores = agent.train(cartpole, 200)
-plt.plot(scores);
+plt.plot(scores)
