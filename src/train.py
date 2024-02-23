@@ -25,10 +25,11 @@ env = TimeLimit(
 
 
 class ReplayBuffer:
-    def __init__(self, capacity):
+    def __init__(self, capacity, device):
         self.capacity = capacity  # capacity of the buffer
         self.data = []
         self.index = 0  # index of the next cell to be filled
+        self.device = device
 
     def append(self, s, a, r, s_, d):
         if len(self.data) < self.capacity:
@@ -81,7 +82,7 @@ class ProjectAgent:
             "nb_actions": 4,
             "learning_rate": 0.001,
             "gamma": 0.95,
-            "buffer_size": 1000000,
+            "buffer_size": 50000,
             "epsilon_min": 0.01,
             "epsilon_max": 1.0,
             "epsilon_decay_period": 1000,
@@ -160,7 +161,7 @@ class ProjectAgent:
 
             # next transition
             step += 1
-            if done:
+            if done or trunc:
                 episode += 1
                 print(
                     "Episode ",
@@ -190,6 +191,16 @@ class ProjectAgent:
 ############################################################
 ############################################################
 ############################################################
+
+
+agent = ProjectAgent()
+agent.train(env, 5)
+
+
+###########################################################
+###########################################################
+###########################################################
+
 
 # Code à dégager :
 if False:
@@ -475,10 +486,8 @@ if False:
     scores = agent.train(cartpole, 200)
     plt.plot(scores)
 
+
 ###########################################################
 ###########################################################
 ###########################################################
 
-
-agent = ProjectAgent()
-agent.train(env, 5)
