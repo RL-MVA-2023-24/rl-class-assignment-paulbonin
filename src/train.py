@@ -191,7 +191,7 @@ class ProjectAgent:
 ############################################################
 ############################################################
 
-# Code à dégager : 
+# Code à dégager :
 if False:
 
     # Testing insertion in the ReplayBuffer class
@@ -233,7 +233,6 @@ if False:
 
     print("Example of a 2-sample minibatch", memory.sample(2))
 
-
     import torch
     import torch.nn as nn
     import gymnasium as gym
@@ -254,19 +253,16 @@ if False:
         nn.Linear(nb_neurons, n_action),
     ).to(device)
 
-
     # %load solutions/replay_buffer2.py
     import random
     import torch
     import numpy as np
-
 
     import numpy as np
     import torch
     import torch.nn as nn
     from solutions.replay_buffer2 import ReplayBuffer
     from solutions.dqn_greedy_action import greedy_action
-
 
     import gymnasium as gym
 
@@ -289,12 +285,10 @@ if False:
         nn.Linear(nb_neurons, n_action),
     ).to(device)
 
-
     # Train agent
     agent = dqn_agent(config, DQN)
     scores = agent.train(cartpole, 200)
     plt.plot(scores)
-
 
     # %load solutions/dqn_agent.py
     import numpy as np
@@ -304,13 +298,14 @@ if False:
     from solutions.replay_buffer2 import ReplayBuffer
     from solutions.dqn_greedy_action import greedy_action
 
-
     class dqn_agent:
         def __init__(self, config, model):
             device = "cuda" if next(model.parameters()).is_cuda else "cpu"
             self.nb_actions = config["nb_actions"]
             self.gamma = config["gamma"] if "gamma" in config.keys() else 0.95
-            self.batch_size = config["batch_size"] if "batch_size" in config.keys() else 100
+            self.batch_size = (
+                config["batch_size"] if "batch_size" in config.keys() else 100
+            )
             buffer_size = (
                 config["buffer_size"] if "buffer_size" in config.keys() else int(1e5)
             )
@@ -331,11 +326,15 @@ if False:
                 if "epsilon_delay_decay" in config.keys()
                 else 20
             )
-            self.epsilon_step = (self.epsilon_max - self.epsilon_min) / self.epsilon_stop
+            self.epsilon_step = (
+                self.epsilon_max - self.epsilon_min
+            ) / self.epsilon_stop
             self.model = model
             self.target_model = deepcopy(self.model).to(device)
             self.criterion = (
-                config["criterion"] if "criterion" in config.keys() else torch.nn.MSELoss()
+                config["criterion"]
+                if "criterion" in config.keys()
+                else torch.nn.MSELoss()
             )
             lr = config["learning_rate"] if "learning_rate" in config.keys() else 0.001
             self.optimizer = (
@@ -406,7 +405,8 @@ if False:
                     tau = self.update_target_tau
                     for key in model_state_dict:
                         target_state_dict[key] = (
-                            tau * model_state_dict[key] + (1 - tau) * target_state_dict[key]
+                            tau * model_state_dict[key]
+                            + (1 - tau) * target_state_dict[key]
                         )
                     target_model.load_state_dict(target_state_dict)
                 # next transition
@@ -430,7 +430,6 @@ if False:
                 else:
                     state = next_state
             return episode_return
-
 
     import gymnasium as gym
 
