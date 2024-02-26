@@ -23,10 +23,10 @@ env = TimeLimit(
 
 class ProjectAgent:
     def __init__(self):
-        self.batch_size = 256
-        self.training_iterations = 16
+        self.batch_size = 2000
+        self.training_iterations = 100
         self.gamma = 0.99
-        self.max_episode = 2000
+        self.max_episode = 50
 
     def act(self, observation, use_random=False):
         return np.random.choice(4) if use_random else self.greedy_action(observation)
@@ -97,7 +97,7 @@ class ProjectAgent:
                         "Episode ",
                         "{:3d}".format(episode),
                         ", episode return ",
-                        "{:4.1f}".format(episode_cum_reward),
+                        "{:4.1f}".format(episode_cum_reward/10e6),
                         sep="",
                     )
                     episode_cum_reward = 0
@@ -107,6 +107,7 @@ class ProjectAgent:
                     break
                 else:
                     state = next_state
+            self.save("rf_model.pkl")
 
     def greedy_action(self, s):
         Qsa = []
