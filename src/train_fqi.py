@@ -23,10 +23,10 @@ env = TimeLimit(
 
 class ProjectAgent:
     def __init__(self):
-        self.batch_size = 1064
-        self.training_iterations = 16
-        self.gamma = 0.9
-        self.nb_train_epochs = 10
+        self.batch_size = 32
+        self.training_iterations = 8
+        self.gamma = 0.99
+        self.max_episode = 200
 
     def act(self, observation, use_random=False):
         return np.random.choice(4) if use_random else self.greedy_action(observation)
@@ -66,10 +66,13 @@ class ProjectAgent:
         return S, A, R, S2, D
 
     def train(self):
-        for _ in range(self.nb_train_epochs):
-            S, A, R, S2, D = self.collect_samples(env)
-            Qfunctions = []
-            SA = np.append(S, A, axis=1)
+        Qfunction = None
+        episode = 0
+        episode_cum_reward = 0
+        state, reward, done, trunc, _ = env.reset()
+        S, A, R, S2, D = self.collect_samples(env)
+        SA = np.append(S, A, axis=1)
+        for episode in range(self.max_episode):
             for iter in tqdm(range(self.training_iterations)):
                 if iter == 0:
                     value = R.copy()
@@ -78,13 +81,30 @@ class ProjectAgent:
                     for a2 in range(4):
                         A2 = a2 * np.ones((S.shape[0], 1))
                         S2A2 = np.append(S2, A2, axis=1)
-                        Q2[:, a2] = Qfunctions[-1].predict(S2A2)
+                        Q2[:, a2] = Qfunction.predict(S2A2)
                     max_Q2 = np.max(Q2, axis=1)
                     value = R + self.gamma * (1 - D) * max_Q2
                 Q = RandomForestRegressor()
                 Q.fit(SA, value)
-                Qfunctions.append(Q)
-            self.model = Qfunctions[-1]
+                Qfunction = Q
+            self.model = Q
+            while True:
+                action = self.act(state)
+                next_state, reward, done, trunc, _ = env.step(action)
+                episode_cum_reward += reward
+                if done or trunc:
+                    print(
+                        "Episode ",
+                        "{:3d}".format(episode),
+                        ", episode return ",
+                        "{:4.1f}".format(episode_cum_reward),
+                        sep="",
+                    )
+                    state, _ = env.reset()
+                    episode_cum_reward = 0
+                    break
+                else:
+                    state = next_state
 
     def greedy_action(self, s):
         Qsa = []
