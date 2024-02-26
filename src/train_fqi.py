@@ -23,10 +23,10 @@ env = TimeLimit(
 
 class ProjectAgent:
     def __init__(self):
-        self.batch_size = 32
-        self.training_iterations = 8
+        self.batch_size = 256
+        self.training_iterations = 16
         self.gamma = 0.99
-        self.max_episode = 200
+        self.max_episode = 2000
 
     def act(self, observation, use_random=False):
         return np.random.choice(4) if use_random else self.greedy_action(observation)
@@ -69,7 +69,7 @@ class ProjectAgent:
         Qfunction = None
         episode = 0
         episode_cum_reward = 0
-        state, reward, done, trunc, _ = env.reset()
+        state, _ = env.reset()
         S, A, R, S2, D = self.collect_samples(env)
         SA = np.append(S, A, axis=1)
         for episode in range(self.max_episode):
@@ -100,8 +100,10 @@ class ProjectAgent:
                         "{:4.1f}".format(episode_cum_reward),
                         sep="",
                     )
-                    state, _ = env.reset()
                     episode_cum_reward = 0
+                    state, _ = env.reset()
+                    S, A, R, S2, D = self.collect_samples(env)
+                    SA = np.append(S, A, axis=1)
                     break
                 else:
                     state = next_state
