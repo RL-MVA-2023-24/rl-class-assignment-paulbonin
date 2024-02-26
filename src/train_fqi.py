@@ -1,12 +1,7 @@
 from gymnasium.wrappers import TimeLimit
 from env_hiv import HIVPatient
-
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torch.distributions import Categorical
 import numpy as np
-import random
+import pickle
 from tqdm import tqdm
 from sklearn.ensemble import RandomForestRegressor
 
@@ -28,21 +23,21 @@ env = TimeLimit(
 
 class ProjectAgent:
     def __init__(self):
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.batch_size = 1064
-        self.training_iterations = 128
-        self.gamma = 0.98
+        self.training_iterations = 16
+        self.gamma = 0.9
+        self.nb_train_epochs = 10
 
     def act(self, observation, use_random=False):
-        if use_random or np.random.rand() <= self.epsilon_min:
-            return np.random.choice(4)
-        return self.greedy_action(self.model, observation)
+        return np.random.choice(4) if use_random else self.greedy_action(observation)
 
     def save(self, path):
-        torch.save(self.model.state_dict(), self.path)
+        with open("rf_model.pkl", "wb") as f:
+            pickle.dump(self.model, f)
 
     def load(self):
-        self.model.load_state_dict(torch.load(self.path))
+        with open("rf_model.pkl", "rb") as f:
+            self.model = pickle.load(f)
 
     def collect_samples(self, env):
         s, _ = env.reset()
@@ -64,35 +59,39 @@ class ProjectAgent:
             else:
                 s = s2
         S = np.array(S)
-        A = np.array(A).reshape((-1,1))
+        A = np.array(A).reshape((-1, 1))
         R = np.array(R)
-        S2= np.array(S2)
+        S2 = np.array(S2)
         D = np.array(D)
         return S, A, R, S2, D
 
-    def rf_fqi(self, S, A, R, S2, D):
-        Qfunctions = []
-        SA = np.append(S, A, axis=1)
-        for iter in tqdm(range(self.training_iterations)):
-            if iter == 0:
-                value = R.copy()
-            else:
-                Q2 = np.zeros((self.batch_size, 4))
-                for a2 in range(4):
-                    A2 = a2 * np.ones((S.shape[0], 1))
-                    S2A2 = np.append(S2, A2, axis=1)
-                    Q2[:, a2] = Qfunctions[-1].predict(S2A2)
-                max_Q2 = np.max(Q2, axis=1)
-                value = R + self.gamma * (1 - D) * max_Q2
-            Q = RandomForestRegressor()
-            Q.fit(SA, value)
-            Qfunctions.append(Q)
-        return Qfunctions
+    def train(self):
+        for _ in range(self.nb_train_epochs):
+            S, A, R, S2, D = self.collect_samples(env)
+            Qfunctions = []
+            SA = np.append(S, A, axis=1)
+            for iter in tqdm(range(self.training_iterations)):
+                if iter == 0:
+                    value = R.copy()
+                else:
+                    Q2 = np.zeros((self.batch_size, 4))
+                    for a2 in range(4):
+                        A2 = a2 * np.ones((S.shape[0], 1))
+                        S2A2 = np.append(S2, A2, axis=1)
+                        Q2[:, a2] = Qfunctions[-1].predict(S2A2)
+                    max_Q2 = np.max(Q2, axis=1)
+                    value = R + self.gamma * (1 - D) * max_Q2
+                Q = RandomForestRegressor()
+                Q.fit(SA, value)
+                Qfunctions.append(Q)
+            self.model = Qfunctions[-1]
 
-    def greedy_action(self, model, state):
-        with torch.no_grad():
-            Q = model(torch.Tensor(state).unsqueeze(0).to(self.device))
-            return torch.argmax(Q).item()
+    def greedy_action(self, s):
+        Qsa = []
+        for a in range(4):
+            sa = np.append(s, a).reshape(1, -1)
+            Qsa.append(self.model.predict(sa))
+        return np.argmax(Qsa)
 
 
 ############################################################
@@ -100,11 +99,5 @@ class ProjectAgent:
 ############################################################
 
 
-agent = ProjectAgent()
-agent.train(env, 5)
-
-
-###########################################################
-###########################################################
-###########################################################
-
+rf = ProjectAgent()
+rf.train()
