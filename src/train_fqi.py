@@ -35,7 +35,7 @@ class ProjectAgent:
         ### PARAMS
         self.collect_size = 600
         self.Q_iterations = 30
-        self.nb_epochs = 50
+        self.nb_epochs = 20
         self.gamma = 0.98
         ### END PARAMS
         self.S = []
@@ -95,12 +95,12 @@ class ProjectAgent:
     def train(self):
         self.collect_samples(env, self.collect_size * 10, randomness=1.0)
         self.rf_fqi()
-        print(0, evaluate_HIV(agent=self, nb_episode=5) / 10e6)
+        print(0, evaluate_HIV(agent=self, nb_episode=1) / 1e6)
         for epoch in range(self.nb_epochs):
             self.collect_samples(env, self.collect_size, randomness=0.15)
             self.rf_fqi()
             seed_everything(seed=42)
-            print(epoch + 1, evaluate_HIV(agent=self, nb_episode=5) / 10e6)
+            print(epoch + 1, evaluate_HIV(agent=self, nb_episode=1) / 1e6)
             if epoch + 1 % 10 == 0:
                 self.save("rf_model.pkl") 
 
