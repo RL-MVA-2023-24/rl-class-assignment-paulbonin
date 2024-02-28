@@ -35,7 +35,7 @@ class ProjectAgent:
         ### PARAMS
         self.collect_size = 500
         self.Q_iterations = 50
-        self.nb_epochs = 20
+        self.nb_epochs = 40
         self.gamma = 0.99
         ### END PARAMS
         self.S = []
@@ -103,7 +103,7 @@ class ProjectAgent:
     def train(self):
         for epoch in range(self.nb_epochs):
             if epoch == 0:
-                self.collect_samples(env, self.collect_size * 6, randomness=1.0)
+                self.collect_samples(env, self.collect_size * 10, randomness=1.0)
                 self.rf_fqi()
                 print(epoch + 1, evaluate_HIV(agent=self, nb_episode=1) / 1e6)
             else:
@@ -112,7 +112,7 @@ class ProjectAgent:
                 # seed_everything(seed=42)
                 print(epoch + 1, evaluate_HIV(agent=self, nb_episode=1) / 1e6)
             if (epoch + 1) % 5 == 0:
-                self.save("30_plus_20_epochs.pkl")
+                self.save("XXX.pkl")
                 print("Model saved")
 
     def act(self, observation, use_random=False):
@@ -123,7 +123,7 @@ class ProjectAgent:
             pickle.dump(self.Q, f)
 
     def load(self):
-        with open("rf_model_30epochs.pkl", "rb") as f:
+        with open("40_epochs.pkl", "rb") as f:
             self.Q = pickle.load(f)
 
 
@@ -132,6 +132,5 @@ class ProjectAgent:
 ############################################################
 
 
-rf = ProjectAgent()
-rf.load()
-rf.train()
+# rf = ProjectAgent()
+# rf.train()
