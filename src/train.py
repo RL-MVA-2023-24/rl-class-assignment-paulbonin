@@ -93,16 +93,19 @@ class ProjectAgent:
         return np.argmax(Qsa)
 
     def train(self):
-        self.collect_samples(env, self.collect_size * 10, randomness=1.0)
-        self.rf_fqi()
-        print(0, evaluate_HIV(agent=self, nb_episode=1) / 1e6)
         for epoch in range(self.nb_epochs):
-            self.collect_samples(env, self.collect_size, randomness=0.15)
-            self.rf_fqi()
-            seed_everything(seed=42)
-            print(epoch + 1, evaluate_HIV(agent=self, nb_episode=1) / 1e6)
-            if epoch + 1 % 10 == 0:
-                self.save("rf_model.pkl") 
+            if epoch == 0:
+                self.collect_samples(env, self.collect_size * 10, randomness=1.0)
+                self.rf_fqi()
+                print(epoch + 1, evaluate_HIV(agent=self, nb_episode=1) / 1e6)
+            else:
+                self.collect_samples(env, self.collect_size, randomness=0.15)
+                self.rf_fqi()
+                # seed_everything(seed=42)
+                print(epoch + 1, evaluate_HIV(agent=self, nb_episode=1) / 1e6)
+            if (epoch + 1) % 5 == 0:
+                self.save("rf_model_20epochs.pkl")
+                print("Model saved")
 
     def act(self, observation, use_random=False):
         return np.random.choice(4) if use_random else self.greedy_action(observation)
@@ -121,5 +124,5 @@ class ProjectAgent:
 ############################################################
 
 
-# rf = ProjectAgent()
-# rf.train()
+rf = ProjectAgent()
+rf.train()
