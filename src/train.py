@@ -35,7 +35,7 @@ class ProjectAgent:
         ### PARAMS
         self.collect_size = 500
         self.Q_iterations = 50
-        self.nb_epochs = 30
+        self.nb_epochs = 20
         self.gamma = 0.99
         ### END PARAMS
         self.S = []
@@ -64,7 +64,7 @@ class ProjectAgent:
                 s = s2
 
     def rf_fqi(self):
-        if len(self.S) < 5000:
+        if len(self.S) < 10000:
             S = np.array(self.S)
             A = np.array(self.A).reshape((-1, 1))
             R = np.array(self.R)
@@ -72,11 +72,11 @@ class ProjectAgent:
             D = np.array(self.D)
             SA = np.append(S, A, axis=1)
         else:
-            S = np.array(self.S)[-5000:]
-            A = np.array(self.A)[-5000:].reshape((-1, 1))
-            R = np.array(self.R)[-5000:]
-            S2 = np.array(self.S2)[-5000:]
-            D = np.array(self.D)[-5000:]
+            S = np.array(self.S)[-10000:]
+            A = np.array(self.A)[-10000:].reshape((-1, 1))
+            R = np.array(self.R)[-10000:]
+            S2 = np.array(self.S2)[-10000:]
+            D = np.array(self.D)[-10000:]
             SA = np.append(S, A, axis=1)
         for iter in tqdm(range(self.Q_iterations)):
             if iter == 0 and self.Q == None:
@@ -112,7 +112,7 @@ class ProjectAgent:
                 # seed_everything(seed=42)
                 print(epoch + 1, evaluate_HIV(agent=self, nb_episode=1) / 1e6)
             if (epoch + 1) % 5 == 0:
-                self.save("rf_model_30epochs.pkl")
+                self.save("30_plus_20_epochs.pkl")
                 print("Model saved")
 
     def act(self, observation, use_random=False):
@@ -133,4 +133,5 @@ class ProjectAgent:
 
 
 rf = ProjectAgent()
+rf.load()
 rf.train()
