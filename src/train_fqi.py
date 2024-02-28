@@ -45,9 +45,9 @@ class ProjectAgent:
         self.D = []
         self.Q = None
 
-    def collect_samples(self, env, randomness=0.0):
+    def collect_samples(self, env, nb_samples, randomness=0.0):
         s, _ = env.reset()
-        for _ in tqdm(range(self.collect_size)):
+        for _ in tqdm(range(nb_samples)):
             if np.random.rand() < randomness:
                 a = np.random.choice(4)
             else:
@@ -70,51 +70,51 @@ class ProjectAgent:
         S2 = np.array(self.S2)
         D = np.array(self.D)
         SA = np.append(S, A, axis=1)
-        Q = self.Q
         for iter in tqdm(range(self.Q_iterations)):
-            if iter == 0 and Qfunction == None:
+            if iter == 0 and self.Q == None:
                 value = R.copy()
             else:
-                Q2 = np.zeros((self.batch_size, 4))
+                Q2 = np.zeros((len(S), 4))
                 for a2 in range(4):
                     A2 = a2 * np.ones((S.shape[0], 1))
                     S2A2 = np.append(S2, A2, axis=1)
-                    Q2[:, a2] = Qfunction.predict(S2A2)
+                    Q2[:, a2] = self.Q.predict(S2A2)
                 max_Q2 = np.max(Q2, axis=1)
                 value = R + self.gamma * (1 - D) * max_Q2
             Q = ExtraTreesRegressor(n_estimators=50, n_jobs=-1)
             Q.fit(SA, value)
-            Qfunction = Q
-        self.model = Q
+            self.Q = Q
 
     def greedy_action(self, s):
         Qsa = []
         for a in range(4):
             sa = np.append(s, a).reshape(1, -1)
-            Qsa.append(self.model.predict(sa))
+            Qsa.append(self.Q.predict(sa))
         return np.argmax(Qsa)
-    
+
     def train(self):
-        self.collect_samples(env, randomness=0.0)
+        self.collect_samples(env, self.collect_size * 10, randomness=1.0)
         self.rf_fqi()
         print(0, evaluate_HIV(agent=self, nb_episode=5) / 10e6)
-        self.save("rf_model.pkl")
         for epoch in range(self.nb_epochs):
-            self.collect_samples(env, randomness=0.1)
+            self.collect_samples(env, self.collect_size, randomness=0.15)
             self.rf_fqi()
+            seed_everything(seed=42)
             print(epoch + 1, evaluate_HIV(agent=self, nb_episode=5) / 10e6)
-            self.save("rf_model.pkl")
+            if epoch + 1 % 10 == 0:
+                self.save("rf_model.pkl") 
 
     def act(self, observation, use_random=False):
         return np.random.choice(4) if use_random else self.greedy_action(observation)
 
     def save(self, path):
-        with open("rf_model.pkl", "wb") as f:
-            pickle.dump(self.model, f)
+        with open(path, "wb") as f:
+            pickle.dump(self.Q, f)
 
     def load(self):
         with open("rf_model.pkl", "rb") as f:
-            self.model = pickle.load(f)
+            self.Q = pickle.load(f)
+
 
 ############################################################
 ############################################################
