@@ -123,7 +123,7 @@ class ProjectAgent:
             pickle.dump(self.Q, f)
 
     def load(self):
-        with open("rf_model_20epochs.pkl", "rb") as f:
+        with open("rf_model_30epochs.pkl", "rb") as f:
             self.Q = pickle.load(f)
 
 
